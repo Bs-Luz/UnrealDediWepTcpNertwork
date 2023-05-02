@@ -1,0 +1,22 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{28A3D9B6-4845-DFF5-12AC-BB867D4F9D68}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "UDWTN",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		}
+	]
+}
