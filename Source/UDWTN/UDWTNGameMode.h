@@ -11,6 +11,7 @@
 #include "SocketSubsystem.h"
 #include "IPAddress.h"
 #include "Interfaces/IPv4/IPv4Address.h"
+#include "Net/UnrealNetwork.h"
 #include "UDWTNGameMode.generated.h"
 
 
@@ -24,11 +25,14 @@ public:
 
 	void ServerToInfoClient();
 
+	void SendServerInfoToTcpServer();
+
 
 
 private:
 	TSharedPtr<FInternetAddr> ClientAddress; //FInternetAddr은 언리얼에서 ip주소와 port 번호를 저장하는 클래스
 	class FSocket* ClientSocket;
+	class FSocket* Socket;
 
 	FString IP;
 	int32 Port;
