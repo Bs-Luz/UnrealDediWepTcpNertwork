@@ -15,105 +15,219 @@ struct DedicatedServerInfo
 
 int main()
 {
-    const int DEDICATED_SERVER_PORT = 10101;
-    const int MAX_BUFFER_SIZE = 1024;
+        const int DEDICATED_SERVER_PORT = 10101;
+        const int MAX_BUFFER_SIZE = 1024;
 
-    WSADATA wsaData;
+        WSADATA wsaData;
 
-    int Result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (Result != 0)
-    {
-        cout << "WinSock2 Error" << endl;
-        return -1;
-    }
+        int Result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        if (Result != 0)
+        {
+            cout << "WinSock2 Error" << endl;
+            return -1;
+        }
 
-    SOCKET ServerSocket = socket(PF_INET, SOCK_STREAM, 0);
+        SOCKET ServerSocket = socket(PF_INET, SOCK_STREAM, 0);
 
-    if (ServerSocket == INVALID_SOCKET)
-    {
-        cout << "소켓 만들 수 없음(create)" << GetLastError() << endl;
-        return -1;
-    }
+        if (ServerSocket == INVALID_SOCKET)
+        {
+            cout << "소켓 만들 수 없음(create)" << GetLastError() << endl;
+            return -1;
+        }
 
-    SOCKADDR_IN ServerSockAddr;
-    memset(&ServerSockAddr, 0, sizeof(ServerSockAddr));
-    ServerSockAddr.sin_family = AF_INET;
-    ServerSockAddr.sin_port = htons(DEDICATED_SERVER_PORT);
-    ServerSockAddr.sin_addr.s_addr = INADDR_ANY;
+        SOCKADDR_IN ServerSockAddr;
+        memset(&ServerSockAddr, 0, sizeof(ServerSockAddr));
+        ServerSockAddr.sin_family = AF_INET;
+        ServerSockAddr.sin_port = htons(DEDICATED_SERVER_PORT);
+        ServerSockAddr.sin_addr.s_addr = INADDR_ANY;
 
-    Result = bind(ServerSocket, (SOCKADDR*)&ServerSockAddr, sizeof(ServerSockAddr));
+        Result = bind(ServerSocket, (SOCKADDR*)&ServerSockAddr, sizeof(ServerSockAddr));
 
-    if (Result == SOCKET_ERROR)
-    {
-        cout << "소켓 만들 수 없음(bind)" << GetLastError() << endl;
-        return -1;
-    }
+        if (Result == SOCKET_ERROR)
+        {
+            cout << "소켓 만들 수 없음(bind)" << GetLastError() << endl;
+            return -1;
+        }
 
-    Result = listen(ServerSocket, 0);
+        Result = listen(ServerSocket, 0);
 
-    if (Result == SOCKET_ERROR)
-    {
-        cout << "소켓 만들 수 없음(listen)" << GetLastError() << endl;
-        return -1;
-    }
+        if (Result == SOCKET_ERROR)
+        {
+            cout << "소켓 만들 수 없음(listen)" << GetLastError() << endl;
+            return -1;
+        }
 
-    SOCKADDR_IN ClientSockAddr;
-    memset(&ClientSockAddr, 0, sizeof(ClientSockAddr));
-    int ClientSockAddrLength = sizeof(ClientSockAddr);
-    int ClientSocket = accept(ServerSocket, (SOCKADDR*)&ClientSockAddr, &ClientSockAddrLength);
+        while (true) // 루프를 사용하여 클라이언트와 계속해서 통신
+        {
+            SOCKADDR_IN ClientSockAddr;
+            memset(&ClientSockAddr, 0, sizeof(ClientSockAddr));
+            int ClientSockAddrLength = sizeof(ClientSockAddr);
+            int ClientSocket = accept(ServerSocket, (SOCKADDR*)&ClientSockAddr, &ClientSockAddrLength);
 
-    if (ClientSocket == SOCKET_ERROR)
-    {
-        cout << "소켓 만들 수 없음(Accept)" << GetLastError() << endl;
-        return -1;
-    }
+            if (ClientSocket == SOCKET_ERROR)
+            {
+                cout << "소켓 만들 수 없음(Accept)" << GetLastError() << endl;
+                continue;
+            }
 
-    // 클라이언트로부터 success 문자를 받을 때까지 대기
-    char recvBuffer[MAX_BUFFER_SIZE] = { 0, };
-    int recvBytes = recv(ClientSocket, recvBuffer, MAX_BUFFER_SIZE, 0);
+            // 클라이언트로부터 success 문자를 받을 때까지 대기
+            char recvBuffer[MAX_BUFFER_SIZE] = { 0, };
+            int recvBytes = recv(ClientSocket, recvBuffer, MAX_BUFFER_SIZE, 0);
 
-    if (recvBytes == SOCKET_ERROR)
-    {
-        cout << "데이터 수신 실패" << endl;
-        closesocket(ClientSocket);
-        closesocket(ServerSocket);
-        WSACleanup();
-        return -1;
-    }
+            if (recvBytes == SOCKET_ERROR)
+            {
+                cout << "데이터 수신 실패" << endl;
+                closesocket(ClientSocket);
+                closesocket(ServerSocket);
+                WSACleanup();
+                return -1;
+            }
 
-    // 클라이언트로부터 success 문자가 아니라면 연결 종료
-    if (strcmp(recvBuffer, "success") != 0)
-    {
-        cout << "클라이언트로부터 success 문자를 받지 못했습니다." << endl;
-        closesocket(ClientSocket);
-        closesocket(ServerSocket);
-        WSACleanup();
-        return -1;
-    }
+            // 클라이언트로부터 success 문자가 아니라면 연결 종료
+            if (strcmp(recvBuffer, "success") != 0)
+            {
+                cout << "클라이언트로부터 success 문자를 받지 못했습니다." << endl;
+                closesocket(ClientSocket);
+                closesocket(ServerSocket);
+                WSACleanup();
+                return -1;
+            }
 
-    // 데디케이티드 서버 정보를 받음
-    DedicatedServerInfo serverInfo = { 0, };
-    recvBytes = recv(ClientSocket, (char*)&serverInfo, sizeof(serverInfo), 0);
+            // 데디케이티드 서버 정보를 받음
+            DedicatedServerInfo serverInfo = { 0, };
+            recvBytes = recv(ClientSocket, (char*)&serverInfo, sizeof(serverInfo), 0);
 
-    if (recvBytes == SOCKET_ERROR)
-    {
-        cout << "데이터 수신 실패" << endl;
-        closesocket(ClientSocket);
-        closesocket(ServerSocket);
-        WSACleanup();
-        return -1;
-    }
+            // 클라이언트와의 연결이 끊어졌는지 체크
+            while (recvBytes > 0)
+            {
+                if (recvBytes == SOCKET_ERROR)
+                {
+                    cout << "데이터 수신 실패" << endl;
+                    break;
+                }
 
-    cout << "데디케이티드 서버 정보 받음" << endl;
-    cout << "IP: " << serverInfo.DediIp << endl;
-    cout << "Port: " << serverInfo.DediPort << endl;
-    cout << "플레이어 수: " << serverInfo.DediPlayerNum << endl;
+                cout << "데디케이티드 서버 정보 받음" << endl;
+                cout << "IP: " << serverInfo.DediIp << endl;
+                cout << "Port: " << serverInfo.DediPort << endl;
+                cout << "플레이어 수: " << serverInfo.DediPlayerNum << endl;
 
-    closesocket(ClientSocket);
-    closesocket(ServerSocket);
-    WSACleanup();
+                // 다음 데이터를 받기 위해 버퍼를 초기화
+                memset(&serverInfo, 0, sizeof(serverInfo));
 
-    return 0;
+                // 데디케이티드 서버 정보를 받음
+                recvBytes = recv(ClientSocket, (char*)&serverInfo, sizeof(serverInfo), 0);
+            }
+
+            // 클라이언트와의 연결이 끊어졌으므로 소켓을 닫고 Winsock을 해제
+            closesocket(ClientSocket);
+        }
+
+
+
+
+
+
+
+
+    //const int DEDICATED_SERVER_PORT = 10101;
+    //const int MAX_BUFFER_SIZE = 1024;
+
+    //WSADATA wsaData;
+
+    //int Result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    //if (Result != 0)
+    //{
+    //    cout << "WinSock2 Error" << endl;
+    //    return -1;
+    //}
+
+    //SOCKET ServerSocket = socket(PF_INET, SOCK_STREAM, 0);
+
+    //if (ServerSocket == INVALID_SOCKET)
+    //{
+    //    cout << "소켓 만들 수 없음(create)" << GetLastError() << endl;
+    //    return -1;
+    //}
+
+    //SOCKADDR_IN ServerSockAddr;
+    //memset(&ServerSockAddr, 0, sizeof(ServerSockAddr));
+    //ServerSockAddr.sin_family = AF_INET;
+    //ServerSockAddr.sin_port = htons(DEDICATED_SERVER_PORT);
+    //ServerSockAddr.sin_addr.s_addr = INADDR_ANY;
+
+    //Result = bind(ServerSocket, (SOCKADDR*)&ServerSockAddr, sizeof(ServerSockAddr));
+
+    //if (Result == SOCKET_ERROR)
+    //{
+    //    cout << "소켓 만들 수 없음(bind)" << GetLastError() << endl;
+    //    return -1;
+    //}
+
+    //Result = listen(ServerSocket, 0);
+
+    //if (Result == SOCKET_ERROR)
+    //{
+    //    cout << "소켓 만들 수 없음(listen)" << GetLastError() << endl;
+    //    return -1;
+    //}
+
+    //SOCKADDR_IN ClientSockAddr;
+    //memset(&ClientSockAddr, 0, sizeof(ClientSockAddr));
+    //int ClientSockAddrLength = sizeof(ClientSockAddr);
+    //int ClientSocket = accept(ServerSocket, (SOCKADDR*)&ClientSockAddr, &ClientSockAddrLength);
+
+    //if (ClientSocket == SOCKET_ERROR)
+    //{
+    //    cout << "소켓 만들 수 없음(Accept)" << GetLastError() << endl;
+    //    return -1;
+    //}
+
+    //// 클라이언트로부터 success 문자를 받을 때까지 대기
+    //char recvBuffer[MAX_BUFFER_SIZE] = { 0, };
+    //int recvBytes = recv(ClientSocket, recvBuffer, MAX_BUFFER_SIZE, 0);
+
+    //if (recvBytes == SOCKET_ERROR)
+    //{
+    //    cout << "데이터 수신 실패" << endl;
+    //    closesocket(ClientSocket);
+    //    closesocket(ServerSocket);
+    //    WSACleanup();
+    //    return -1;
+    //}
+
+    //// 클라이언트로부터 success 문자가 아니라면 연결 종료
+    //if (strcmp(recvBuffer, "success") != 0)
+    //{
+    //    cout << "클라이언트로부터 success 문자를 받지 못했습니다." << endl;
+    //    closesocket(ClientSocket);
+    //    closesocket(ServerSocket);
+    //    WSACleanup();
+    //    return -1;
+    //}
+
+    //// 데디케이티드 서버 정보를 받음
+    //DedicatedServerInfo serverInfo = { 0, };
+    //recvBytes = recv(ClientSocket, (char*)&serverInfo, sizeof(serverInfo), 0);
+
+    //if (recvBytes == SOCKET_ERROR)
+    //{
+    //    cout << "데이터 수신 실패" << endl;
+    //    closesocket(ClientSocket);
+    //    closesocket(ServerSocket);
+    //    WSACleanup();
+    //    return -1;
+    //}
+
+    //cout << "데디케이티드 서버 정보 받음" << endl;
+    //cout << "IP: " << serverInfo.DediIp << endl;
+    //cout << "Port: " << serverInfo.DediPort << endl;
+    //cout << "플레이어 수: " << serverInfo.DediPlayerNum << endl;
+
+    //closesocket(ClientSocket);
+    //closesocket(ServerSocket);
+    //WSACleanup();
+
+    //return 0;
 }
 
 

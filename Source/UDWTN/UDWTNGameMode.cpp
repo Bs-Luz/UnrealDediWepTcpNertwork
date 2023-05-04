@@ -6,9 +6,9 @@
 
 struct DedicatedServerInfo
 {
-    FString DediIp[16];
-    int32 DediPort;
-    int32 DediPlayerNum;
+    char DediIp[16];
+    int DediPort;
+    int DediPlayerNum;
 };
 
 AUDWTNGameMode::AUDWTNGameMode()
