@@ -15,7 +15,7 @@ struct DedicatedServerInfo
 
 int main()
 {
-    const int DEDICATED_SERVER_PORT = 7777;
+    const int DEDICATED_SERVER_PORT = 10101;
     const int MAX_BUFFER_SIZE = 1024;
 
     WSADATA wsaData;

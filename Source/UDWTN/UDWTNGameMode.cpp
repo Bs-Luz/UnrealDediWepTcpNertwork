@@ -20,49 +20,50 @@ AUDWTNGameMode::AUDWTNGameMode()
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 
-	/*ServerToInfoClient();
-	SendServerInfoToTcpServer();*/
-    SendDedicatedServerInfo(IP,Port,PlayerNum);
+	/*ServerToInfoClient();*/
+	SendServerInfoToTcpServer();
+    
+    
 }
 
-void AUDWTNGameMode::SendDedicatedServerInfo(const FString& ServerIP, int32 ServerPort, int32 Player)
-{
-    // 소켓 서브시스템 초기화
-    const auto SocketSubsystem = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
-    check(SocketSubsystem != nullptr);
-
-    // TCP 소켓 생성
-    Socket = SocketSubsystem->CreateSocket(NAME_Stream, TEXT("default"), true);
-
-    // TCP 서버에 연결
-    TSharedRef<FInternetAddr> RemoteAddr = SocketSubsystem->CreateInternetAddr();
-    bool bIsValid;
-    RemoteAddr->SetIp(*ServerIP, bIsValid);
-    check(bIsValid);
-    RemoteAddr->SetPort(ServerPort);
-    check(Socket->Connect(*RemoteAddr));
-
-    // 데디케이티드 서버 정보를 전송
-    DedicatedServerInfo ServerInfo;
-    FMemory::Memzero(ServerInfo);
-    FMemory::Memcpy(ServerInfo.DediIp, TCHAR_TO_UTF8(*ServerIP), FMath::Min(ServerIP.Len() + 1, 16));
-    ServerInfo.DediPort = ServerPort;
-    ServerInfo.DediPlayerNum = Player;
-    int32 Sent = 0;
-    int32 BytesToSend = sizeof(ServerInfo);
-    bool bSuccessful = false;
-    do
-    {
-        bSuccessful = Socket->Send((uint8*)&ServerInfo + Sent, BytesToSend - Sent, Sent);
-        if (!bSuccessful)
-        {
-            break;
-        }
-        Sent += BytesToSend;
-    } while (Sent < BytesToSend);
-
-    Socket->Close();
-}
+//void AUDWTNGameMode::SendDedicatedServerInfo(const FString& ServerIP, int32 ServerPort, int32 Player)
+//{
+//    // 소켓 서브시스템 초기화
+//    const auto SocketSubsystem = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
+//    check(SocketSubsystem != nullptr);
+//
+//    // TCP 소켓 생성
+//    Socket = SocketSubsystem->CreateSocket(NAME_Stream, TEXT("default"), true);
+//
+//    // TCP 서버에 연결
+//    TSharedRef<FInternetAddr> RemoteAddr = SocketSubsystem->CreateInternetAddr();
+//    bool bIsValid;
+//    RemoteAddr->SetIp(*ServerIP, bIsValid);
+//    check(bIsValid);
+//    RemoteAddr->SetPort(ServerPort);
+//    check(Socket->Connect(*RemoteAddr));
+//
+//    // 데디케이티드 서버 정보를 전송
+//    DedicatedServerInfo ServerInfo;
+//    FMemory::Memzero(ServerInfo);
+//    FMemory::Memcpy(ServerInfo.DediIp, TCHAR_TO_UTF8(*ServerIP), FMath::Min(ServerIP.Len() + 1, 16));
+//    ServerInfo.DediPort = ServerPort;
+//    ServerInfo.DediPlayerNum = Player;
+//    int32 Sent = 0;
+//    int32 BytesToSend = sizeof(ServerInfo);
+//    bool bSuccessful = false;
+//    do
+//    {
+//        bSuccessful = Socket->Send((uint8*)&ServerInfo + Sent, BytesToSend - Sent, Sent);
+//        if (!bSuccessful)
+//        {
+//            break;
+//        }
+//        Sent += BytesToSend;
+//    } while (Sent < BytesToSend);
+//
+//    Socket->Close();
+//}
 
 //void AUDWTNGameMode::ServerToInfoClient()
 //{
@@ -96,53 +97,52 @@ void AUDWTNGameMode::SendDedicatedServerInfo(const FString& ServerIP, int32 Serv
 //	}
 //}
 //
-//void AUDWTNGameMode::SendServerInfoToTcpServer()
-//{
-//	// TCP 서버의 IP와 PORT
-//	FString ServerIP = TEXT("127.0.0.1");
-//	int32 ServerPort = 10101;
-//
-//	// TCP 서버와 연결을 수립
-//	TSharedPtr<FInternetAddr> RemoteAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-//	bool bIsValid;
-//	RemoteAddress->SetIp(*ServerIP, bIsValid);
-//	RemoteAddress->SetPort(ServerPort);
-//
-//	ClientAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-//	Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("default"), true);
-//
-//	bool bConnectSuccess = Socket->Connect(*RemoteAddress);
-//
-//	if (!bConnectSuccess)
-//	{
-//		UE_LOG(LogTemp, Error, TEXT("Failed to connect to TCP server."));
-//		return;
-//	}
-//
-//	// 데디케이티드 서버 정보를 버퍼에 담기
-//	FString ServerName = TEXT("My Dedicated Server");
-//	FString ServerAddress = TEXT("127.0.0.1");
-//	int32 ServerPortNumber = 7777;
-//
-//	FString ServerInfoString = FString::Printf(TEXT("%s,%s,%d"), *ServerName, *ServerAddress, ServerPortNumber);
-//	TArray<uint8> ServerInfoBytes;
-//	FTCHARToUTF8 ConvertedString(*ServerInfoString);
-//	ServerInfoBytes.Append((uint8*)ConvertedString.Get(), ConvertedString.Length());
-//	ServerInfoBytes.Add('\0');
-//
-//	// TCP 서버에 데디케이티드 서버 정보 전송
-//	int32 BytesSent = 0;
-//	bool bSentSuccess = Socket->Send(ServerInfoBytes.GetData(), ServerInfoBytes.Num(), BytesSent);
-//	if (!bSentSuccess || BytesSent != ServerInfoBytes.Num())
-//	{
-//		UE_LOG(LogTemp, Error, TEXT("Failed to send server info to TCP server."));
-//	}
-//	else
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("Server info has been sent to TCP server."));
-//	}
-//
-//	// TCP 서버와 연결 종료
-//	Socket->Close();
-//}
+void AUDWTNGameMode::SendServerInfoToTcpServer()
+{
+	// TCP 서버의 IP와 PORT
+	FString ServerIP = TEXT("127.0.0.1");
+	int32 ServerPort = 10101;
 
+	// TCP 서버와 연결을 수립
+	TSharedPtr<FInternetAddr> RemoteAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
+	bool bIsValid;
+	RemoteAddress->SetIp(*ServerIP, bIsValid);
+	RemoteAddress->SetPort(ServerPort);
+
+	ClientAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
+	Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("default"), true);
+
+	bool bConnectSuccess = Socket->Connect(*RemoteAddress);
+
+	if (!bConnectSuccess)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to connect to TCP server."));
+		return;
+	}
+
+	// 데디케이티드 서버 정보를 버퍼에 담기
+	FString ServerName = TEXT("My Dedicated Server");
+	FString ServerAddress = TEXT("127.0.0.1");
+	int32 ServerPortNumber = 7777;
+
+	FString ServerInfoString = FString::Printf(TEXT("%s,%s,%d"), *ServerName, *ServerAddress, ServerPortNumber);
+	TArray<uint8> ServerInfoBytes;
+	FTCHARToUTF8 ConvertedString(*ServerInfoString);
+	ServerInfoBytes.Append((uint8*)ConvertedString.Get(), ConvertedString.Length());
+	ServerInfoBytes.Add('\0');
+
+	// TCP 서버에 데디케이티드 서버 정보 전송
+	int32 BytesSent = 0;
+	bool bSentSuccess = Socket->Send(ServerInfoBytes.GetData(), ServerInfoBytes.Num(), BytesSent);
+	if (!bSentSuccess || BytesSent != ServerInfoBytes.Num())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to send server info to TCP server."));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Server info has been sent to TCP server."));
+	}
+
+	// TCP 서버와 연결 종료
+	Socket->Close();
+}
