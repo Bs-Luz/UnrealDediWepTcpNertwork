@@ -12,6 +12,7 @@
 #include "IPAddress.h"
 #include "Interfaces/IPv4/IPv4Address.h"
 #include "Net/UnrealNetwork.h"
+//#include "Networking/Public/Networking.h"
 #include "UDWTNGameMode.generated.h"
 
 
@@ -23,9 +24,11 @@ class AUDWTNGameMode : public AGameModeBase
 public:
 	AUDWTNGameMode();
 
-	void ServerToInfoClient();
+	/*void ServerToInfoClient();
 
-	void SendServerInfoToTcpServer();
+	void SendServerInfoToTcpServer();*/
+
+	void SendDedicatedServerInfo(const FString& ServerIP, int32 ServerPort, int32 PlayerNum);
 
 
 
@@ -36,6 +39,7 @@ private:
 
 	FString IP;
 	int32 Port;
+	int32 PlayerNum;
 
 };
 
