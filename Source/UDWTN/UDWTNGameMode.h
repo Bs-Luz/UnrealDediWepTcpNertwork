@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "UDWTN_ClientWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 //소켓통신을 위한 헤더
@@ -48,6 +49,3 @@ private:
 	//int32 PlayerNum;
 
 };
-
-
-
