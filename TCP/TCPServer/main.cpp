@@ -53,15 +53,16 @@ struct DBDatas
 };
 #pragma pack(pop)
 
-void SendToDB(sql::Statement* _statement, string IPAddr, int PortNum, int PlayerNum)
+void SendToDB(sql::Statement* _statement, string IPAddr, int PortNum, int PlayerNum, int Server_State)
 {
 	// DB에 입력될 데이터 값
 	string IP = IPAddr;
 	string stringPort = to_string(PortNum);
 	string stringPlayerNumber = to_string(PlayerNum);
+	string server_state = to_string(Server_State);
 
 	// 쿼리문 세팅
-	string query = "INSERT INTO server_list (ip_address, port_number, player_number) VALUES ('" + IP + "', " + stringPort + ", " + stringPlayerNumber + ") ON DUPLICATE KEY UPDATE player_number=" + stringPlayerNumber + ";";
+	string query = "INSERT INTO server_list (ip_address, port_number, player_number, server_state) VALUES ('" + IP + "', " + stringPort + ", " + stringPlayerNumber + ", " + server_state + ") ON DUPLICATE KEY UPDATE player_number=" + stringPlayerNumber + ";";
 
 	try
 	{
@@ -121,7 +122,7 @@ int main()
 	SOCKADDR_IN TCPServerSocketAddr;	//소켓 주소 구조체 만들기
 	memset(&TCPServerSocketAddr, NULL, sizeof(TCPServerSocketAddr));	//초기화
 	TCPServerSocketAddr.sin_family = AF_INET;				//IPv4
-	TCPServerSocketAddr.sin_port = htons(10000);			//port
+	TCPServerSocketAddr.sin_port = htons(10101);			//port
 	TCPServerSocketAddr.sin_addr.s_addr = INADDR_ANY;		//모두 수신
 
 	//socket 연결
@@ -188,7 +189,7 @@ int main()
 							//20230426 받은 데이터 : 서버
 							if (number == 1)
 							{
-								char DediServerBuffer[1024] = { 0, };
+								char DediServerBuffer[1024] = { 0, };  
 								int DediServerRecvBytes = recv(ReadSockets.fd_array[i], DediServerBuffer, sizeof(DediServerBuffer), 0);
 								DediServerBuffer[DediServerRecvBytes] = '\0';	//버퍼의 마지막에 null추가
 								MyData data;
@@ -200,13 +201,13 @@ int main()
 
 								//20230426 DB연결
 								cout << "----------DBInfo----------" << endl;
-								SendToDB(DB_Statement, data.IP, data.ServerPort, data.PlayerNum);
+								SendToDB(DB_Statement, data.IP, data.ServerPort, data.PlayerNum, 1);
 							}
 							//20230426 받은 데이터 : 클라
 							else
 							{
 								cout << "----------ClientServer----------" << endl;
-
+								
 								//1. db에서 포트번호랑 ip 받기
 								ReceiveFromDB(DB_Statement, DB_ResultSet);
 								DBInfoData DBData;
@@ -235,7 +236,7 @@ int main()
 								}
 
 								//20230502
-								for (int j = 0; j < 10; j++)
+								for(int j = 0; j < 10; j++)
 								{
 									//조건1. 서버가 맨처음 7777 이어야할것
 									//조건2. 7777서버가 풀일때 7778 서버로 들어가야할것
@@ -259,12 +260,12 @@ int main()
 											cout << "------------------------------------" << endl;
 											break;
 										}
-										else
+										else 
 										{
 											cout << "1 else" << endl;
 										}
 									}
-									else if (dbDatas[j].ServerPort == 7778)
+									else if(dbDatas[j].ServerPort == 7778)
 									{
 										if (dbDatas[j].ServerPlayer <= MAXPlayer)
 										{
@@ -306,3 +307,4 @@ int main()
 
 	return 0;
 }
+

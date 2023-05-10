@@ -14,7 +14,8 @@
 #include "Interfaces/IPv4/IPv4Address.h"
 #include "Net/UnrealNetwork.h"
 #include "Networking/Public/Networking.h"
-#include "Online.h"
+#include "SocketThread.h"
+#include "SingletonData.h"
 #include "UDWTNGameMode.generated.h"
 
 
@@ -24,20 +25,19 @@ class AUDWTNGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+
 	AUDWTNGameMode();
 
-	/*void ServerToInfoClient();*/
+	void ServerToInfoClient();
 
 	void SendServerInfoToTcpServer();
 
-	/*void SendDedicatedServerInfo(const FString& ServerIP, int32 ServerPort, int32 PlayerNum);
-	void SendDediServerInfo();
+	virtual void InitGameState() override;
 
-	FString GetIPAddress();
-	int32 GetPortNumber();
-	int32 GetConnectedPlayerCount();*/
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
 
-
+	void InfoThread();
 
 private:
 	TSharedPtr<FInternetAddr> ClientAddress; //FInternetAddr은 언리얼에서 ip주소와 port 번호를 저장하는 클래스

@@ -19,8 +19,7 @@ AUDWTNGameMode::AUDWTNGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
-
-	// UMG_Login 위젯 생성하기
+	/*UMG_Login 위젯 생성하기*/
 	static ConstructorHelpers::FClassFinder<UUDWTN_ClientWidget> LoginWidgetClass(TEXT("/Game/ThirdPerson/Blueprints/UDWTN_ClientLoginWidget"));
 	if (LoginWidgetClass.Succeeded())
 	{
@@ -43,87 +42,99 @@ AUDWTNGameMode::AUDWTNGameMode()
 		UE_LOG(LogTemp, Warning, TEXT("그냥 다시 해"));
 	}
 
+	//스레드생성
+	//FTestThread* Sender = new FTestThread(FString::Printf(TEXT("%i"), GetNumPlayers()));
+	SocketThread* Sender = new SocketThread();
+	FRunnableThread* Thread = FRunnableThread::Create(Sender, TEXT("SendThread"));
+
 	/*ServerToInfoClient();*/
-	SendServerInfoToTcpServer();
+	/*SendServerInfoToTcpServer();*/
     
     
 }
 
-//void AUDWTNGameMode::SendDedicatedServerInfo(const FString& ServerIP, int32 ServerPort, int32 Player)
-//{
-//    // 소켓 서브시스템 초기화
-//    const auto SocketSubsystem = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
-//    check(SocketSubsystem != nullptr);
-//
-//    // TCP 소켓 생성
-//    Socket = SocketSubsystem->CreateSocket(NAME_Stream, TEXT("default"), true);
-//
-//    // TCP 서버에 연결
-//    TSharedRef<FInternetAddr> RemoteAddr = SocketSubsystem->CreateInternetAddr();
-//    bool bIsValid;
-//    RemoteAddr->SetIp(*ServerIP, bIsValid);
-//    check(bIsValid);
-//    RemoteAddr->SetPort(ServerPort);
-//    check(Socket->Connect(*RemoteAddr));
-//
-//    // 데디케이티드 서버 정보를 전송
-//    DedicatedServerInfo ServerInfo;
-//    FMemory::Memzero(ServerInfo);
-//    FMemory::Memcpy(ServerInfo.DediIp, TCHAR_TO_UTF8(*ServerIP), FMath::Min(ServerIP.Len() + 1, 16));
-//    ServerInfo.DediPort = ServerPort;
-//    ServerInfo.DediPlayerNum = Player;
-//    int32 Sent = 0;
-//    int32 BytesToSend = sizeof(ServerInfo);
-//    bool bSuccessful = false;
-//    do
-//    {
-//        bSuccessful = Socket->Send((uint8*)&ServerInfo + Sent, BytesToSend - Sent, Sent);
-//        if (!bSuccessful)
-//        {
-//            break;
-//        }
-//        Sent += BytesToSend;
-//    } while (Sent < BytesToSend);
-//
-//    Socket->Close();
-//}
+void AUDWTNGameMode::ServerToInfoClient()
+{
+	ClientSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("DefaultSocket"), false);
+	ClientAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 
-//void AUDWTNGameMode::ServerToInfoClient()
-//{
-//	ClientSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("DefaultSocket"), false); //소켓 생성
-//	ClientAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();//IPv4 주소체계를 사용하는 IP주소와 PORT 번호 저장
-//
-//	IP = TEXT("127.0.0.1"); //TCP 서버의 IP
-//	Port = 10101; //TCP 서버의 PORT
-//	FIPv4Address Temp; //직접 문자열로 전달해주는것보다 변환해서 파싱 하는게 안전하기 때문에 파싱한 IP값이 들어갈 저장소
-//	FIPv4Address::Parse(IP, Temp); // IP값을 파싱해서 Temp에 저장
-//	ClientAddress->SetIp(Temp.Value); //파싱된 IP 저장
-//	ClientAddress->SetPort(Port); //PORT 저장 PORT는 정수임으로 파싱 노필요
-//
-//	if (ClientSocket->Connect(*ClientAddress)) //서버 연결 시도
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("클라이언트 접속 성공"));
-//	}
-//	else
-//	{
-//		UE_LOG(LogTemp, Error, TEXT("클라이언트 접속 실패"))
-//	}
-//
-//	int PushData = 3;
-//	uint8_t buffer[sizeof(int)];
-//	memcpy(buffer, &PushData, sizeof(int));
-//
-//	int32 ByteSent = 0;
-//	if (ClientSocket->GetConnectionState() == ESocketConnectionState::SCS_Connected)
-//	{
-//		ClientSocket->Send(buffer, sizeof(int), ByteSent);
-//	}
-//}
-//
+	FString IP = TEXT("192.168.0.53");	//tcp ip
+	int32 port = 10101;	//tcp port
+	FIPv4Address TemporaryAddr;		//임시 저장소
+	FIPv4Address::Parse(IP, TemporaryAddr); //ip를 temporaryAddr에 변환해서 넣고
+	ClientAddress->SetPort(port);	//port넣음
+	ClientAddress->SetIp(TemporaryAddr.Value);	//ip넣음
+
+	if (ClientSocket->Connect(*ClientAddress))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Client : TCP서버 접속 성공"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Client : TCP서버 접속 실패"));
+	}
+
+	int MyClientServer = 2;
+	uint8_t buffer[sizeof(int)];
+	memcpy(buffer, &MyClientServer, sizeof(int));
+
+	int32 bytesSent = 0;
+	if (ClientSocket->GetConnectionState() == ESocketConnectionState::SCS_Connected)
+	{
+		ClientSocket->Send(buffer, sizeof(int), bytesSent);
+	}
+
+
+	struct ServerData
+	{
+		uint16_t ServerPort;
+		char IP[16];
+	};
+	ServerData SData;
+	uint8_t DBBuffer[1024] = { 0, };
+	int32 bytes = 0;
+	int ClientServerRecvBytes = 0;
+
+	UE_LOG(LogTemp, Warning, TEXT("TCP DB Data...."));
+
+	if (ClientSocket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromSeconds(5)))
+	{
+		ClientServerRecvBytes = ClientSocket->Recv(DBBuffer, sizeof(DBBuffer), bytes);
+
+		if (ClientServerRecvBytes < 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Error"));
+		}
+		else if (ClientSocket == 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("No Data"));
+		}
+		else
+		{
+			//DBBuffer[ClientServerRecvBytes] = '\0';
+			UE_LOG(LogTemp, Warning, TEXT("In Data"));
+			memcpy(&SData, DBBuffer, sizeof(ServerData));
+
+			UE_LOG(LogTemp, Warning, TEXT("%d"), SData.ServerPort);
+			FString str(SData.IP);
+			str += ":";
+			str += FString::FromInt(SData.ServerPort);
+
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *str);
+
+			GetWorld()->GetFirstPlayerController()->ClientTravel(str, TRAVEL_Absolute);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No"));
+	}
+}
+
 void AUDWTNGameMode::SendServerInfoToTcpServer()
 {
 	// TCP 서버의 IP와 PORT
-	FString ServerIP = TEXT("127.0.0.1");
+	FString ServerIP = TEXT("192.168.0.53");
 	int32 ServerPort = 10101;
 
 	// TCP 서버와 연결을 수립
@@ -168,4 +179,69 @@ void AUDWTNGameMode::SendServerInfoToTcpServer()
 
 	// TCP 서버와 연결 종료
 	Socket->Close();
+}
+
+void AUDWTNGameMode::InitGameState()
+{
+}
+
+void AUDWTNGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	UE_LOG(LogTemp, Warning, TEXT("클라이언트 접속함"));
+
+	InfoThread();
+
+	////voice
+	//FActorSpawnParameters paramSpawn;
+	//paramSpawn.Owner = NewPlayer;
+	//APlayerVoiceChatActor* VoiceChatActor = GetWorld()->SpawnActor<APlayerVoiceChatActor>(FVector(0, 0, 0), FRotator(0, 0, 0), paramSpawn);
+
+	//if (VoiceChatActor != NULL)
+	//{
+	//	VoiceChatActor->ServerSetAttenuation(true, FString("/Script/Engine.SoundAttenuation'/Game/NewSoundAttenuation.NewSoundAttenuation'"));
+	//	VoiceChatActor->ServerPerformAntiCheat = false;
+	//	VoiceChatActor->AntiCheatAllowUseProximity = true;
+	//	VoiceChatActor->AntiCheatAllowUseGlobal = true;
+	//	VoiceChatActor->AntiCheatMaxProximityRange = 1000.0f;
+	//	VoiceChatActor->ServerSetAllowUseGlobal(true);
+	//}
+}
+
+void AUDWTNGameMode::Logout(AController* Exiting)
+{
+	Super::Logout(Exiting);
+
+	InfoThread();
+}
+
+void AUDWTNGameMode::InfoThread()
+{
+	//서버의 포트번호 / IP 불러오는 방법
+	FString URLString = GetWorld()->URL.ToString();
+	FURL URL(NULL, *URLString, ETravelType::TRAVEL_Absolute);
+	int32 ServerPort;
+	if (URL.Valid && URL.Port > 0)
+	{
+		ServerPort = URL.Port;
+	}
+
+	// Get IP Address
+	FString IPAddress = "";
+	bool canBind = false;
+	TSharedRef<FInternetAddr>LocalIp =
+		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLocalHostAddr(*GLog, canBind);
+
+	if (LocalIp->IsValid())
+	{
+		IPAddress = LocalIp->ToString(false);
+		UE_LOG(LogTemp, Error, TEXT("GameMode IP : %s"), *IPAddress);
+	}
+
+	//싱글톤으로 정보보내기
+	//IP 인자값 = 로컬서버를 사용하지 않으면 URL.Host 를 쓰면 된다.
+	UE_LOG(LogTemp, Error, TEXT("GameMode Port : %d"), ServerPort);
+	USingletonData::GetInstance()->SetData(GetNumPlayers(), static_cast<int>(ServerPort), *IPAddress);
+	USingletonData::GetInstance()->SerBool(true);
 }
