@@ -8,7 +8,7 @@ public class UDWTN : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "EnhancedInput", "Sockets", "Networking", "OnlineSubsystem", "UMG", "HTTP", "Json", "JsonUtilities" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "EnhancedInput", "Sockets", "Networking", "OnlineSubsystem", "UMG", "HTTP", "Json", "JsonUtilities", "UniversalVoiceChatPro", "Voice" });
         //소켓통신과 네트워크에 필요한 모듈 "Sockets", "Networking"
         //Json 파싱을 위한 모듈 "Json", "JsonUtilities"
         //웹서버의 정보를 받아와야하기 때문에 필요한 모듈 "HTTP"

@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "UDWTN_ClientWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "PlayerVoiceChatActor.h"
 
 //소켓통신을 위한 헤더
 #include "Sockets.h"
