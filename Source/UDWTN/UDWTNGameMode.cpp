@@ -150,7 +150,7 @@ void AUDWTNGameMode::SendServerInfoToTcpServer()
 
 	if (!bConnectSuccess)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to connect to TCP server."));
+		UE_LOG(LogTemp, Error, TEXT("TCP 서버 커넥트 실패"));
 		return;
 	}
 
@@ -236,12 +236,12 @@ void AUDWTNGameMode::InfoThread()
 	if (LocalIp->IsValid())
 	{
 		IPAddress = LocalIp->ToString(false);
-		UE_LOG(LogTemp, Error, TEXT("GameMode IP : %s"), *IPAddress);
+		UE_LOG(LogTemp, Error, TEXT("게임모드 IP : %s"), *IPAddress);
 	}
 
 	//싱글톤으로 정보보내기
 	//IP 인자값 = 로컬서버를 사용하지 않으면 URL.Host 를 쓰면 된다.
-	UE_LOG(LogTemp, Error, TEXT("GameMode Port : %d"), ServerPort);
+	UE_LOG(LogTemp, Error, TEXT("게임모드 : %d"), ServerPort);
 	USingletonData::GetInstance()->SetData(GetNumPlayers(), static_cast<int>(ServerPort), *IPAddress);
 	USingletonData::GetInstance()->SerBool(true);
 }

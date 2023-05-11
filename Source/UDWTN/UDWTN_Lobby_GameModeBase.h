@@ -16,6 +16,6 @@ class UDWTN_API AUDWTN_Lobby_GameModeBase : public AGameModeBase
 	GENERATED_BODY()
 
 public:
-	AUDWTN_Lobby_GameModeBase();
-	
+	/*AUDWTN_Lobby_GameModeBase();
+	*/
 };

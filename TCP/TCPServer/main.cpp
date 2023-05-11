@@ -128,11 +128,11 @@ int main()
 	//socket 연결
 	//mysql 에도 bind 라는 api 가 있기때문에 ::bind 를 쓰면 소켓bind 를 사용한다.
 	Result = ::bind(TCPServerSocket, (SOCKADDR*)&TCPServerSocketAddr, sizeof(TCPServerSocketAddr));
-	if (Result == SOCKET_ERROR) { cout << "Can't bind" << GetLastError(); return -1; }
+	if (Result == SOCKET_ERROR) { cout << "bind 할 수 없음" << GetLastError(); return -1; }
 
 	//server 열기
 	Result = listen(TCPServerSocket, 0);
-	if (Result == SOCKET_ERROR) { cout << "Can't listen" << GetLastError(); return -1; }
+	if (Result == SOCKET_ERROR) { cout << "listen 할 수 없음" << GetLastError(); return -1; }
 
 	//fd  
 	fd_set ReadSockets;
@@ -195,7 +195,7 @@ int main()
 								MyData data;
 								memcpy(&data, DediServerBuffer, sizeof(MyData));
 								cout << "----------DediServer----------" << endl;
-								cout << "PlayerNum : " << data.PlayerNum << endl;
+								cout << "PlayerCount : " << data.PlayerNum << endl;
 								cout << "ServerPort : " << data.ServerPort << endl;
 								cout << "IP : " << data.IP << endl;
 

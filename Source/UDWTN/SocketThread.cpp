@@ -12,7 +12,7 @@ SocketThread::~SocketThread()
 	//스레드 삭제
 	if (thread)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("스레드 종료."));
+		UE_LOG(LogTemp, Warning, TEXT("쓰레드 종료."));
 		delete thread;
 	}
 }
@@ -26,7 +26,7 @@ bool SocketThread::Init()
 	DediServerSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("DefaultSocket"), false);
 	DediServerAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 
-	FString IP = TEXT("127.0.0.1");	//tcp ip
+	FString IP = TEXT("192.168.0.53");	//tcp ip
 	int32 port = 10101;	//tcp port
 	FIPv4Address TemporaryAddr;		//임시 저장소
 	FIPv4Address::Parse(IP, TemporaryAddr); //ip를 temporaryAddr에 변환해서 넣고
@@ -47,7 +47,7 @@ bool SocketThread::Init()
 
 uint32 SocketThread::Run()
 {
-	UE_LOG(LogTemp, Warning, TEXT("스레드 보내기."));
+	UE_LOG(LogTemp, Warning, TEXT("쓰레드 보내기."));
 
 	while (bRunThread)
 	{
@@ -79,8 +79,8 @@ uint32 SocketThread::Run()
 			data.PlayerNum = USingletonData::GetInstance()->GetData().PlayerCount;
 			data.ServerPort = USingletonData::GetInstance()->GetData().ServerPort;
 
-			UE_LOG(LogTemp, Warning, TEXT("Thread Port : %d"), USingletonData::GetInstance()->GetData().ServerPort);
-			UE_LOG(LogTemp, Warning, TEXT("Thread IP : %s"), *USingletonData::GetInstance()->GetData().IP);
+			UE_LOG(LogTemp, Warning, TEXT("쓰레드 Port : %d"), USingletonData::GetInstance()->GetData().ServerPort);
+			UE_LOG(LogTemp, Warning, TEXT("쓰레드 IP : %s"), *USingletonData::GetInstance()->GetData().IP);
 
 			//FString 변수에 저장된 IP 를 char 로 변환하고 strncpy_s 함수를 사용해 char 배열에 복사
 			strncpy_s(data.IP, sizeof(data.IP), TCHAR_TO_ANSI(*USingletonData::GetInstance()->GetData().IP), _TRUNCATE);
@@ -114,5 +114,5 @@ void SocketThread::Stop()
 {
 	bRunThread = false;
 
-	UE_LOG(LogTemp, Warning, TEXT("스레드 종료."));
+	UE_LOG(LogTemp, Warning, TEXT("쓰레드 종료."));
 }

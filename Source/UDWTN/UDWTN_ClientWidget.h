@@ -49,12 +49,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnButtonClickToBack();
 
-	void LoginInfoToTcpServer(FString);
 	bool ConnectToDedicatedServer();
 	void HttpRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bSuccess);
 
 private:
-	FString TcpSererIpAdd = TEXT("127.0.0.1");
+	FString TcpSererIpAdd = TEXT("192.168.0.53");
 	int32 TcpServerPort = 10101;
 	FString ClientInfo;
 	FSocket* Socket;
